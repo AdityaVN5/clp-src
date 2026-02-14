@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { ClipItem } from './components/ClipItem';
@@ -6,7 +8,7 @@ import { CollectionModal } from './components/CollectionModal';
 import { SettingsModal } from './components/SettingsModal';
 import { EditClipModal } from './components/EditClipModal';
 import { LabelModal } from './components/LabelModal';
-import { MOCK_CLIPS, COLLECTIONS as INITIAL_COLLECTIONS } from './constants';
+import { COLLECTIONS as INITIAL_COLLECTIONS } from './constants';
 import { Collection, ColorTheme, Clip, SortOption, AppTheme } from './types';
 
 const App: React.FC = () => {
@@ -14,10 +16,10 @@ const App: React.FC = () => {
   const [activeCollectionId, setActiveCollectionId] = useState<string | null>('all'); // Default to All History
   
   // State for Collections
-  const [collections, setCollections] = useState<Collection[]>(INITIAL_COLLECTIONS);
+  const [collections, setCollections] = useState<Collection[]>([]);
   
-  // State for Clips (moved from constant to state to allow deletion)
-  const [clips, setClips] = useState<Clip[]>(MOCK_CLIPS);
+  // State for Clips
+  const [clips, setClips] = useState<Clip[]>([]);
   
   // State for Search & Sort
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,6 +56,22 @@ const App: React.FC = () => {
       root.classList.add(theme);
     }
   }, [theme]);
+
+  // Load Data & Listen for Events
+  useEffect(() => {
+    invoke<Collection[]>('get_collections').then(setCollections);
+    invoke<Clip[]>('get_clips').then(setClips);
+
+    const unlistenChanged = listen<Clip>('clipboard-changed', (event) => {
+       setClips(prev => [event.payload, ...prev]); 
+       // Optionally fetch all valid clips to ensure consistency
+       // invoke<Clip[]>('get_clips').then(setClips);
+    });
+
+    return () => {
+      unlistenChanged.then(f => f());
+    };
+  }, []);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -97,29 +115,30 @@ const App: React.FC = () => {
   const handleSaveCollection = (data: { name: string; color: ColorTheme; iconName: string }) => {
     if (editingCollection) {
       // Update existing
-      setCollections(prev => prev.map(c => 
-        c.id === editingCollection.id 
-          ? { ...c, ...data } 
-          : c
-      ));
+      invoke<Collection[]>('update_collection', { 
+        id: editingCollection.id, 
+        name: data.name, 
+        color: data.color, 
+        iconName: data.iconName 
+      }).then(setCollections);
     } else {
       // Create new
-      const newCollection: Collection = {
-        id: `c${Date.now()}`,
-        name: data.name,
-        count: 0,
-        color: data.color,
-        iconName: data.iconName,
-      };
-      setCollections(prev => [...prev, newCollection]);
-      setActiveCollectionId(newCollection.id);
+      invoke<Collection[]>('create_collection', { 
+        name: data.name, 
+        color: data.color, 
+        iconName: data.iconName 
+      }).then(cols => {
+        setCollections(cols);
+        // Set active to new collection? Need to find it or backend custom return
+        // For simplicity, just update list. The backend returns updated list.
+      });
     }
     setIsModalOpen(false);
   };
 
   const handleDeleteCollection = (id: string) => {
     if (window.confirm('Are you sure you want to delete this collection?')) {
-      setCollections(prev => prev.filter(c => c.id !== id));
+      invoke<Collection[]>('delete_collection', { id }).then(setCollections);
       if (activeCollectionId === id) {
         setActiveCollectionId('all');
       }
@@ -136,26 +155,30 @@ const App: React.FC = () => {
   // --- Clip Action Handlers ---
 
   const handleClipDelete = (id: string) => {
-    setClips(prev => prev.filter(c => c.id !== id));
+    invoke<Clip[]>('delete_clip', { id }).then(setClips);
   };
 
   const handleClipPin = (id: string) => {
-    setClips(prev => prev.map(c => 
-      c.id === id ? { ...c, isPinned: !c.isPinned } : c
-    ));
+    invoke<Clip[]>('toggle_pin', { id }).then(setClips);
   };
 
   const handleMoveToCollection = (clipId: string, collectionId: string | null) => {
-    setClips(prev => prev.map(c => 
-      c.id === clipId ? { ...c, collectionId } : c
-    ));
+    invoke<Clip[]>('move_clip', { id: clipId, collectionId }).then(setClips);
     setActiveContextMenu(null);
   };
 
   const handleClipLabelColor = (id: string, color: ColorTheme | null) => {
-    setClips(prev => prev.map(c => 
-      c.id === id ? { ...c, labelColor: color } : c
-    ));
+    // We reuse set_clip_label but need to know current text or assume separated commands
+    // I implemented set_clip_label(id, text, color). 
+    // And set_clip_color is for background.
+    // Let's use set_clip_label command if we have text, or just update color if text is null?
+    // Actually, backend set_clip_label takes text and optional color.
+    // If we only want to change color, we need the text.
+    // Let's find the clip first.
+    const clip = clips.find(c => c.id === id);
+    if (clip) {
+        invoke<Clip[]>('set_clip_label', { id, text: clip.labelText || '', color }).then(setClips);
+    }
   };
 
   const initiateClipLabelText = (id: string, currentText: string) => {
@@ -164,23 +187,22 @@ const App: React.FC = () => {
   };
 
   const handleRemoveClipLabel = (id: string) => {
-     setClips(prev => prev.map(c => 
-        c.id === id ? { ...c, labelText: undefined } : c
-      ));
+     invoke<Clip[]>('delete_clip_label', { id }).then(setClips);
   };
 
   const handleSaveClipLabelText = (text: string) => {
     if (clipToLabel) {
-      setClips(prev => prev.map(c => 
-        c.id === clipToLabel.id ? { ...c, labelText: text } : c
-      ));
+      const clip = clips.find(c => c.id === clipToLabel.id);
+      invoke<Clip[]>('set_clip_label', { 
+        id: clipToLabel.id, 
+        text, 
+        color: clip?.labelColor || null 
+      }).then(setClips);
     }
   };
 
   const handleClipColor = (id: string, bg: string) => {
-    setClips(prev => prev.map(c => 
-      c.id === id ? { ...c, backgroundColor: bg } : c
-    ));
+    invoke<Clip[]>('set_clip_color', { id, color: bg }).then(setClips);
   };
 
   const initiateClipEdit = (id: string, currentContent: string) => {
@@ -190,9 +212,7 @@ const App: React.FC = () => {
 
   const handleSaveClipEdit = (newContent: string) => {
     if (clipToEdit) {
-      setClips(prev => prev.map(c => 
-        c.id === clipToEdit.id ? { ...c, content: newContent } : c
-      ));
+      invoke<Clip[]>('update_clip', { id: clipToEdit.id, content: newContent }).then(setClips);
     }
   };
 
