@@ -144,7 +144,7 @@ export const ClipItem: React.FC<ClipItemProps> = ({
         {/* Content Section (Left) */}
         <div className="flex-1 pr-2 min-w-0 overflow-hidden">
           {clip.type === 'text' ? (
-            <p className={`text-[13px] leading-tight line-clamp-2 pt-1 ${customBg ? 'text-slate-800' : 'text-slate-600 dark:text-slate-300'}`}>
+            <p className={`text-sm leading-tight line-clamp-2 pt-1 ${customBg ? 'text-slate-800' : 'text-slate-600 dark:text-slate-300'}`}>
               {clip.content}
             </p>
           ) : (
@@ -154,8 +154,8 @@ export const ClipItem: React.FC<ClipItemProps> = ({
           )}
         </div>
 
-        {/* Metadata Section (Right) */}
-        <div className="flex items-center space-x-3 flex-shrink-0">
+        {/* Metadata Section (Right) - Hidden on small screens (<640px) */}
+        <div className="hidden sm:flex items-center space-x-3 flex-shrink-0">
           <div className="flex flex-col items-end">
             <span className={`text-[10px] font-bold ${colorTextMap[collectionColor]}`}>
               {collectionName}

@@ -313,35 +313,29 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-white dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-200">
-      {/* Sidebar Overlay */}
-      <aside className={`fixed inset-y-0 left-0 z-30 shadow-xl dark:shadow-none border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-transform duration-300 ease-in-out transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} w-64`}>
-        <Sidebar 
-          isOpen={true} // Always render contents, visibility controlled by transform
-          toggleSidebar={toggleSidebar}
-          activeCollectionId={activeCollectionId}
-          onSelectCollection={(id) => { setActiveCollectionId(id); setIsSidebarOpen(false); }} // Close on select
-          collections={collectionsWithCounts} 
-          onAddCollection={handleAddCollectionClick}
-          onEditCollection={handleEditCollectionClick}
-          onUpdateCollection={handleUpdateCollection}
-          onDeleteCollection={handleDeleteCollection}
-          onReorderCollections={handleReorderCollections}
-        />
-      </aside>
-
-      {/* Backdrop */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 z-20 bg-black/20 backdrop-blur-sm transition-opacity"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+      {/* Sidebar (Push Layout) */}
+      <div className={`flex-shrink-0 h-full z-20 bg-white dark:bg-slate-950 border-r border-gray-100 dark:border-slate-800 transition-all duration-300 ease-in-out overflow-hidden ${isSidebarOpen ? 'w-64' : 'w-0'}`}>
+        <div className="w-64 h-full"> 
+          <Sidebar 
+            isOpen={true} 
+            toggleSidebar={toggleSidebar}
+            activeCollectionId={activeCollectionId}
+            onSelectCollection={(id) => { setActiveCollectionId(id); }} 
+            collections={collectionsWithCounts} 
+            onAddCollection={handleAddCollectionClick}
+            onEditCollection={handleEditCollectionClick}
+            onUpdateCollection={handleUpdateCollection}
+            onDeleteCollection={handleDeleteCollection}
+            onReorderCollections={handleReorderCollections}
+          />
+        </div>
+      </div>
 
       {/* Right Pane (Main Window) */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative bg-white dark:bg-slate-950">
+      <main className="flex-1 flex flex-col h-full overflow-hidden relative bg-white dark:bg-slate-950 min-w-0">
         
         <div className="flex flex-col h-full">
-          {/* Header - 10-12% height approx */}
+          {/* Header */}
           <div className="flex-none bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm z-10 px-4 pt-4 transition-colors duration-200" style={{ height: 'min-content' }}>
             <Header 
               searchQuery={searchQuery}
@@ -351,11 +345,12 @@ const App: React.FC = () => {
               onOpenSettings={() => setIsSettingsOpen(true)}
               isAppPinned={isAppPinned}
               onToggleAppPin={handleToggleAppPin}
+              onToggleSidebar={toggleSidebar}
             />
             <div className="h-px w-full bg-gray-100 dark:bg-slate-800 mt-2 transition-colors duration-200"></div>
           </div>
 
-          {/* Clips List Area - 75-80% height approx */}
+          {/* Clips List Area */}
           <div className="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar">
             <div className="w-full">
               {/* Clips List */}
@@ -398,19 +393,6 @@ const App: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Optional Footer/Settings - 8-10% height */}
-          {!isSidebarOpen && (
-            <div className="flex-none p-3 border-t border-gray-100 dark:border-slate-800 flex justify-between items-center text-xs text-slate-400 px-4">
-               <button 
-                  onClick={toggleSidebar}
-                  className="hover:text-slate-600 dark:hover:text-slate-300 font-medium"
-               >
-                 Show Sidebar
-               </button>
-               <div>{filteredClips.length} clips</div>
-            </div>
-          )}
         </div>
       </main>
       

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Settings, ChevronDown, Check, Pin, PinOff } from 'lucide-react';
+import { Search, Settings, Filter, ChevronDown, Pin, PinOff, Menu, Check } from 'lucide-react';
 import { SortOption } from '../types';
 
 interface HeaderProps {
@@ -10,6 +10,7 @@ interface HeaderProps {
   onOpenSettings: () => void;
   isAppPinned: boolean;
   onToggleAppPin: () => void;
+  onToggleSidebar: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
@@ -19,7 +20,8 @@ export const Header: React.FC<HeaderProps> = ({
   onSortChange,
   onOpenSettings,
   isAppPinned,
-  onToggleAppPin
+  onToggleAppPin,
+  onToggleSidebar
 }) => {
   const [isSortOpen, setIsSortOpen] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
@@ -51,17 +53,28 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between py-2 px-1 mb-1 space-y-2 md:space-y-0">
-      {/* Search Bar */}
-      <div className="relative w-full md:w-64 group">
-        <input 
-          id="search-input"
-          type="text" 
-          placeholder="Search..." 
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full pl-4 pr-10 py-2 bg-gray-100/80 dark:bg-slate-800/80 border-none rounded-full text-xs text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 focus:bg-white dark:focus:bg-slate-800 transition-all outline-none placeholder-gray-500 dark:placeholder-gray-400 font-medium"
-        />
-        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400" size={16} />
+      
+      <div className="flex items-center w-full md:w-auto space-x-2">
+        {/* Sidebar Toggle (Hamburger) */}
+        <button 
+          onClick={onToggleSidebar}
+          className="p-2 -ml-2 rounded-lg text-slate-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
+        >
+          <Menu size={20} />
+        </button>
+
+        {/* Search Bar */}
+        <div className="relative w-full md:w-64 group">
+          <input 
+            id="search-input"
+            type="text" 
+            placeholder="Search..." 
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full pl-4 pr-10 py-2 bg-gray-100/80 dark:bg-slate-800/80 border-none rounded-full text-xs text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 focus:bg-white dark:focus:bg-slate-800 transition-all outline-none placeholder-gray-500 dark:placeholder-gray-400 font-medium"
+          />
+          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400" size={16} />
+        </div>
       </div>
 
       {/* Actions */}
