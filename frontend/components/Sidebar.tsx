@@ -98,7 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <div 
       className={`
         relative bg-white dark:bg-slate-950 border-r border-gray-100 dark:border-slate-800 h-full flex flex-col transition-all duration-300 ease-in-out
-        ${isOpen ? 'w-80' : 'w-20'}
+        ${isOpen ? 'w-full' : 'w-20'}
       `}
     >
       {/* Toggle Button */}
@@ -118,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
              <ClipboardList size={20} strokeWidth={2.5} />
            </div>
            {isOpen && (
-             <span className="ml-3 text-2xl font-black tracking-tight text-slate-800 dark:text-white">clp</span>
+             <span className="ml-2 text-xl font-black tracking-tight text-slate-800 dark:text-white">clp</span>
            )}
         </div>
 
@@ -142,26 +142,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div 
           onClick={() => onSelectCollection('all')}
           className={`
-            group cursor-pointer rounded-2xl transition-all duration-300 relative overflow-hidden select-none
-            ${isOpen ? 'p-4 h-24' : 'mx-auto w-12 h-12 flex items-center justify-center mt-2 mb-2'} 
+            group cursor-pointer rounded-xl transition-all duration-200 relative overflow-hidden select-none
+            ${isOpen ? 'p-3 h-14 flex items-center' : 'mx-auto w-10 h-10 flex items-center justify-center mt-2 mb-2'} 
             ${activeCollectionId === 'all' && isOpen ? 'bg-slate-800 dark:bg-slate-700 text-white shadow-lg shadow-slate-200 dark:shadow-none' : ''}
             ${activeCollectionId === 'all' && !isOpen ? 'bg-slate-800 dark:bg-slate-700 text-white shadow-md' : 'hover:bg-gray-50 dark:hover:bg-slate-800'}
           `}
           title={!isOpen ? "All History" : undefined}
         >
           {isOpen ? (
-             <div className="flex items-center h-full">
-               <div className={`p-3 rounded-xl mr-4 ${activeCollectionId === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
-                 <Layers size={24} />
+             <div className="flex items-center w-full">
+               <div className={`p-1.5 rounded-lg mr-3 flex-shrink-0 ${activeCollectionId === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
+                 <Layers size={16} />
                </div>
-               <div>
-                 <h3 className={`font-bold text-sm ${activeCollectionId === 'all' ? 'text-white' : 'text-slate-800 dark:text-white'}`}>All History</h3>
-                 <p className={`text-xs font-medium mt-0.5 ${activeCollectionId === 'all' ? 'text-white/60' : 'text-gray-400 dark:text-slate-400'}`}>Everything</p>
+               <div className="min-w-1 flex-1">
+                 <h3 className={`font-bold text-xs truncate ${activeCollectionId === 'all' ? 'text-white' : 'text-slate-800 dark:text-white'}`}>All History</h3>
+                 <p className={`text-[10px] font-medium mt-0.5 truncate ${activeCollectionId === 'all' ? 'text-white/60' : 'text-gray-400 dark:text-slate-400'}`}>Everything</p>
                </div>
              </div>
           ) : (
              <div className={`${activeCollectionId === 'all' ? 'text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200'}`}>
-                <Layers size={24} />
+                <Layers size={18} />
              </div>
           )}
         </div>
@@ -181,28 +181,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, index)}
               className={`
-                group cursor-pointer rounded-2xl transition-all duration-300 relative overflow-hidden select-none
-                ${isOpen ? 'p-4 h-24' : 'mx-auto w-12 h-12 flex items-center justify-center'}
+                group cursor-pointer rounded-xl transition-all duration-200 relative overflow-hidden select-none
+                ${isOpen ? 'p-3 h-14 flex items-center' : 'mx-auto w-10 h-10 flex items-center justify-center'}
                 ${isOpen ? colorMap[collection.color] : ''}
-                ${isOpen && isActive ? 'ring-2 ring-offset-2 ring-gray-300 dark:ring-slate-600 shadow-sm' : ''}
+                ${isOpen && isActive ? 'ring-1 ring-offset-1 ring-gray-300 dark:ring-slate-600 shadow-sm' : ''}
                 ${!isOpen && isActive ? iconBgMap[collection.color] + ' shadow-md' : ''}
                 ${!isOpen && !isActive ? 'hover:bg-gray-50 dark:hover:bg-slate-800' : ''}
-                ${draggedIndex === index ? 'opacity-50 border-2 border-dashed border-gray-300' : ''}
+                ${draggedIndex === index ? 'opacity-50 border border-dashed border-gray-300' : ''}
               `}
               title={!isOpen ? collection.name : undefined}
             >
               {isOpen ? (
                  // Expanded View
-                <div className="flex items-center h-full">
+                <div className="flex items-center w-full">
                   <div className={`
-                    p-3 rounded-xl shadow-sm mr-4
+                    p-1.5 rounded-lg shadow-sm mr-3 flex-shrink-0
                     ${iconBgMap[collection.color]}
                   `}>
-                    <IconHelper name={collection.iconName} size={24} />
+                    <IconHelper name={collection.iconName} size={16} />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-sm">{collection.name}</h3>
-                    <p className="text-xs opacity-70 font-medium mt-0.5">{collection.count} items</p>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-xs truncate">{collection.name}</h3>
+                    <p className="text-[10px] opacity-70 font-medium truncate">{collection.count} items</p>
                   </div>
                 </div>
               ) : (
@@ -211,7 +211,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   transition-all
                   ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}
                 `}>
-                   <IconHelper name={collection.iconName} size={22} />
+                   <IconHelper name={collection.iconName} size={18} />
                 </div>
               )}
             </div>

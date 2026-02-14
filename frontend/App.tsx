@@ -314,8 +314,8 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen bg-white dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-200">
       {/* Sidebar (Push Layout) */}
-      <div className={`flex-shrink-0 h-full z-20 bg-white dark:bg-slate-950 border-r border-gray-100 dark:border-slate-800 transition-all duration-300 ease-in-out overflow-hidden ${isSidebarOpen ? 'w-64' : 'w-0'}`}>
-        <div className="w-64 h-full"> 
+      <div className={`flex-shrink-0 h-full z-20 bg-white dark:bg-slate-950 border-r border-gray-100 dark:border-slate-800 transition-all duration-300 ease-in-out overflow-hidden ${isSidebarOpen ? 'w-[170px]' : 'w-0'}`}>
+        <div className="w-[170px] h-full"> 
           <Sidebar 
             isOpen={true} 
             toggleSidebar={toggleSidebar}

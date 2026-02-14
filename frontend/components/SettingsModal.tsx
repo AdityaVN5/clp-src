@@ -82,24 +82,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col md:flex-row h-[600px]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 sm:p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col md:flex-row h-full md:h-[600px] max-h-[90vh]">
         
-        {/* Sidebar */}
-        <div className="w-full md:w-64 bg-gray-50 dark:bg-slate-950 border-r border-gray-100 dark:border-slate-800 p-4 flex flex-col gap-1 overflow-y-auto">
-          <h2 className="text-lg font-bold text-slate-800 dark:text-white px-4 mb-4 mt-2">Settings</h2>
+        {/* Sidebar / Top Bar */}
+        <div className="w-full md:w-64 bg-gray-50 dark:bg-slate-950 border-b md:border-b-0 md:border-r border-gray-100 dark:border-slate-800 p-2 md:p-4 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-y-auto shrink-0 scrollbar-hide">
+          <h2 className="hidden md:block text-lg font-bold text-slate-800 dark:text-white px-4 mb-4 mt-2">Settings</h2>
           
           <NavButton active={activeTab === 'general'} onClick={() => setActiveTab('general')} icon={<Shield size={18} />} label="General" />
           <NavButton active={activeTab === 'hotkeys'} onClick={() => setActiveTab('hotkeys')} icon={<Keyboard size={18} />} label="Hotkeys" />
-          <NavButton active={activeTab === 'storage'} onClick={() => setActiveTab('storage')} icon={<Database size={18} />} label="History & Storage" />
+          <NavButton active={activeTab === 'storage'} onClick={() => setActiveTab('storage')} icon={<Database size={18} />} label="History" />
           <NavButton active={activeTab === 'appearance'} onClick={() => setActiveTab('appearance')} icon={<Monitor size={18} />} label="Appearance" />
           <NavButton active={activeTab === 'about'} onClick={() => setActiveTab('about')} icon={<Info size={18} />} label="About" />
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-slate-900 transition-colors">
-          <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-slate-800 flex-shrink-0">
-             <h3 className="font-bold text-slate-700 dark:text-slate-200 text-lg capitalize flex items-center gap-2">
+        <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-slate-900 transition-colors overflow-hidden">
+          <div className="flex justify-between items-center p-4 md:p-6 border-b border-gray-100 dark:border-slate-800 flex-shrink-0">
+             <h3 className="font-bold text-slate-700 dark:text-slate-200 text-base md:text-lg capitalize flex items-center gap-2">
                {activeTab === 'storage' ? 'History & Storage' : activeTab === 'hotkeys' ? 'Hotkeys & Shortcuts' : activeTab}
              </h3>
              <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
@@ -448,7 +448,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 const NavButton = ({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) => (
   <button 
     onClick={onClick}
-    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 w-full text-left ${
+    className={`flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl text-xs md:text-sm font-medium transition-all duration-200 flex-shrink-0 md:w-full text-left whitespace-nowrap ${
       active 
         ? 'bg-white dark:bg-slate-800 shadow-md text-blue-600 dark:text-blue-400 ring-1 ring-gray-100 dark:ring-0' 
         : 'text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm hover:text-slate-700 dark:hover:text-slate-200'
