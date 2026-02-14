@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7,27 +7,31 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
-        darkMode: 'class',
+        darkMode: "class",
         theme: {
           extend: {
             fontFamily: {
-              sans: ['Geist', 'sans-serif'],
+              sans: ["Geist", "sans-serif"],
             },
             colors: {
               slate: {
-                850: '#151f32',
-                900: '#0f172a',
-                950: '#020617',
-              }
-            }
-          }
-        }
-      }
+                850: "#151f32",
+                900: "#0f172a",
+                950: "#020617",
+              },
+            },
+          },
+        },
+      };
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
     <style>
       body {
-        font-family: 'Geist', sans-serif;
+        font-family: "Geist", sans-serif;
+        zoom: 0.8;
       }
       /* Custom Scrollbar for Webkit */
       ::-webkit-scrollbar {
@@ -50,20 +54,22 @@
         background: #475569;
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
-</head>
-  <body class="bg-gray-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200">
+    <script type="importmap">
+      {
+        "imports": {
+          "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+          "react/": "https://esm.sh/react@^19.2.4/",
+          "react": "https://esm.sh/react@^19.2.4",
+          "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="/index.css" />
+  </head>
+  <body
+    class="bg-gray-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200"
+  >
     <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
-</body>
+    <script type="module" src="/index.tsx"></script>
+  </body>
 </html>
