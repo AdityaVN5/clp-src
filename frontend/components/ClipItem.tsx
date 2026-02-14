@@ -118,61 +118,59 @@ export const ClipItem: React.FC<ClipItemProps> = ({
         onClick={onClick}
         onContextMenu={handleContextMenu}
         className={`
-          group relative flex flex-col sm:flex-row sm:items-center py-6 border-b transition-all px-4 -mx-2 rounded-xl mb-2 cursor-pointer
+          group relative flex flex-row items-center h-[75px] border-b transition-all px-3 -mx-1 rounded-lg mb-1 cursor-pointer overflow-hidden
           ${isSelected 
-             ? 'ring-2 ring-blue-500 shadow-md bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' 
-             : `border-gray-100 dark:border-slate-800 hover:shadow-md ${!customBg ? 'bg-white dark:bg-slate-900/50' : ''}`}
+             ? 'ring-2 ring-blue-500 shadow-sm bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' 
+             : `border-gray-50 dark:border-slate-800 hover:shadow-sm ${!customBg ? 'bg-white dark:bg-slate-900/50' : ''}`}
         `}
         style={customBg ? { backgroundColor: customBg } : {}}
       >
         {/* Pin Indicator */}
         {clip.isPinned && (
-           <div className="absolute top-2 right-2 text-slate-400 dark:text-slate-500 rotate-45">
-             <Pin size={16} fill="currentColor" />
+           <div className="absolute top-1 right-1 text-slate-400 dark:text-slate-500 rotate-45">
+             <Pin size={12} fill="currentColor" />
            </div>
         )}
 
-        {/* Custom Label (Top Bar or Badge) */}
+        {/* Custom Label (Badge) */}
         {clip.labelText ? (
-           <div className={`absolute top-2 left-4 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-white shadow-sm ${clip.labelColor ? labelColorMap[clip.labelColor] : 'bg-gray-500'}`}>
+           <div className="absolute top-0 left-0 px-1.5 py-0.5 rounded-br text-[8px] font-bold uppercase tracking-tighter text-white shadow-sm z-10" style={{ backgroundColor: clip.labelColor ? labelColorMap[clip.labelColor].replace('bg-', '') : 'gray' }}>
              {clip.labelText}
            </div>
         ) : clip.labelColor ? (
-           <div className={`absolute top-0 left-6 w-12 h-1.5 rounded-b-md ${labelColorMap[clip.labelColor]}`} />
+           <div className={`absolute top-0 left-4 w-6 h-1 rounded-b-sm ${labelColorMap[clip.labelColor]}`} />
         ) : null}
 
         {/* Content Section (Left) */}
-        {/* Added dynamic padding-top (pt-8) if label text exists to create space */}
-        <div className={`flex-1 pr-4 min-w-0 mb-3 sm:mb-0 mt-2 sm:mt-0 ${clip.labelText ? 'pt-8' : ''}`}>
+        <div className="flex-1 pr-2 min-w-0 overflow-hidden">
           {clip.type === 'text' ? (
-            <p className={`text-[15px] leading-relaxed line-clamp-2 cursor-default pt-2 sm:pt-0 ${customBg ? 'text-slate-800' : 'text-slate-600 dark:text-slate-300'}`}>
+            <p className={`text-[13px] leading-tight line-clamp-2 pt-1 ${customBg ? 'text-slate-800' : 'text-slate-600 dark:text-slate-300'}`}>
               {clip.content}
             </p>
           ) : (
-            <div className="h-24 w-64 rounded-xl overflow-hidden shadow-sm mt-2 sm:mt-0 bg-gray-100 dark:bg-slate-800">
+            <div className="h-12 w-20 rounded-md overflow-hidden bg-gray-100 dark:bg-slate-800">
                <img src={clip.imageSrc} alt="Clip" className="w-full h-full object-cover" />
             </div>
           )}
         </div>
 
         {/* Metadata Section (Right) */}
-        <div className="flex items-center justify-between sm:justify-end sm:space-x-8 min-w-[200px]">
-          <div className="flex flex-col items-start sm:items-end">
-            <span className={`text-sm font-bold mb-1 ${colorTextMap[collectionColor]}`}>
+        <div className="flex items-center space-x-3 flex-shrink-0">
+          <div className="flex flex-col items-end">
+            <span className={`text-[10px] font-bold ${colorTextMap[collectionColor]}`}>
               {collectionName}
             </span>
-            <div className="flex items-center text-gray-400 dark:text-gray-500 text-xs font-medium space-x-1">
-               <span>{clip.createdAt.split(' ').slice(0, -2).join(' ')}</span>
-               <span className={`${customBg ? 'text-slate-800' : 'text-slate-800 dark:text-slate-200'} font-bold`}>{clip.createdAt.split(' ').slice(-2).join(' ')}</span>
+            <div className="flex items-center text-gray-400 dark:text-gray-500 text-[10px] font-medium">
+               <span>{clip.createdAt.split(' ').slice(-2).join(' ')}</span>
             </div>
           </div>
 
           {/* Icon Badge */}
           <div className={`
-            flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-md shadow-gray-200 dark:shadow-none
+            flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm
             ${collection ? iconBgMap[collectionColor] + ' text-white' : 'bg-gray-200 dark:bg-slate-700 text-white'}
           `}>
-            <IconHelper name={collectionIcon} size={24} />
+            <IconHelper name={collectionIcon} size={16} />
           </div>
         </div>
       </div>

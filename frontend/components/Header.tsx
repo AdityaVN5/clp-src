@@ -50,47 +50,47 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between py-6 px-1 mb-2 space-y-4 md:space-y-0">
+    <div className="flex flex-col md:flex-row md:items-center justify-between py-2 px-1 mb-1 space-y-2 md:space-y-0">
       {/* Search Bar */}
-      <div className="relative w-full md:w-96 group">
+      <div className="relative w-full md:w-64 group">
         <input 
           id="search-input"
           type="text" 
           placeholder="Search..." 
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full pl-6 pr-12 py-3.5 bg-gray-100/80 dark:bg-slate-800/80 border-none rounded-full text-sm text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 focus:bg-white dark:focus:bg-slate-800 transition-all outline-none placeholder-gray-500 dark:placeholder-gray-400 font-medium"
+          className="w-full pl-4 pr-10 py-2 bg-gray-100/80 dark:bg-slate-800/80 border-none rounded-full text-xs text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 focus:bg-white dark:focus:bg-slate-800 transition-all outline-none placeholder-gray-500 dark:placeholder-gray-400 font-medium"
         />
-        <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400" size={20} />
+        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400" size={16} />
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-end space-x-4">
+      <div className="flex items-center justify-end space-x-2">
         
         {/* Screen Pin Button (Visual Only in Web) */}
         <button
           onClick={onToggleAppPin}
           className={`
-            p-2 rounded-full transition-all duration-200 
+            p-1.5 rounded-full transition-all duration-200 
             ${isAppPinned 
               ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 shadow-sm ring-1 ring-blue-200 dark:ring-blue-800' 
               : 'text-slate-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200'}
           `}
           title={isAppPinned ? "Unpin from screen" : "Pin to screen"}
         >
-          {isAppPinned ? <Pin size={20} fill="currentColor" /> : <PinOff size={20} />}
+          {isAppPinned ? <Pin size={16} fill="currentColor" /> : <PinOff size={16} />}
         </button>
 
-        <div className="h-6 w-px bg-gray-200 dark:bg-slate-700 mx-2"></div>
+        <div className="h-4 w-px bg-gray-200 dark:bg-slate-700 mx-1"></div>
 
         {/* Sort Dropdown */}
         <div className="relative" ref={sortRef}>
           <button 
             onClick={() => setIsSortOpen(!isSortOpen)}
-            className="flex items-center space-x-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium text-sm focus:outline-none"
+            className="flex items-center space-x-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium text-xs focus:outline-none"
           >
-            <span>{getSortLabel(sortOption)}</span>
-            <ChevronDown size={16} className={`transition-transform duration-200 ${isSortOpen ? 'rotate-180' : ''}`} />
+            <span>{getSortLabel(sortOption).replace('Sort by date ', '').replace('Sort ', '')}</span>
+            <ChevronDown size={14} className={`transition-transform duration-200 ${isSortOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isSortOpen && (

@@ -12,7 +12,7 @@ import { COLLECTIONS as INITIAL_COLLECTIONS } from './constants';
 import { Collection, ColorTheme, Clip, SortOption, AppTheme } from './types';
 
 const App: React.FC = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeCollectionId, setActiveCollectionId] = useState<string | null>('all'); // Default to All History
   
   // State for Collections
@@ -283,21 +283,11 @@ const App: React.FC = () => {
       // Ignore if modals are open
       if (isModalOpen || isSettingsOpen || isEditClipOpen || isLabelModalOpen) return;
       
-      // Ignore if input focused (except search which should blur on arrow down?)
-      // Actually standard behavior: arrows navigate list even if search focused?
-      // Let's keep it simple: if search focused, arrows still work? 
-      // If user types in search, arrows usually move cursor. 
-      // So if search input is focused, maybe we shouldn't hijack arrows unless modifier?
-      // Or just prevent default if not in input?
-      // Let's allow navigation always for now, or check activeElement.
-      
       const isInput = document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement;
       if (isInput && e.key !== 'Enter' && e.key !== 'Escape') {
-          // If searching, we might want to allow ArrowDown to jump to list
           if (e.key === 'ArrowDown' && document.activeElement?.id === 'search-input') {
               e.preventDefault();
               (document.activeElement as HTMLElement).blur();
-              // focus list?
           }
           return;
       }
@@ -323,14 +313,14 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-white dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-200">
-      {/* Left Pane */}
-      <aside className="h-full z-20 shadow-xl shadow-gray-100/50 dark:shadow-none border-r border-transparent dark:border-slate-800">
+      {/* Sidebar Overlay */}
+      <aside className={`fixed inset-y-0 left-0 z-30 shadow-xl dark:shadow-none border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-transform duration-300 ease-in-out transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} w-64`}>
         <Sidebar 
-          isOpen={isSidebarOpen} 
+          isOpen={true} // Always render contents, visibility controlled by transform
           toggleSidebar={toggleSidebar}
           activeCollectionId={activeCollectionId}
-          onSelectCollection={setActiveCollectionId}
-          collections={collectionsWithCounts} // Use computed collections
+          onSelectCollection={(id) => { setActiveCollectionId(id); setIsSidebarOpen(false); }} // Close on select
+          collections={collectionsWithCounts} 
           onAddCollection={handleAddCollectionClick}
           onEditCollection={handleEditCollectionClick}
           onUpdateCollection={handleUpdateCollection}
@@ -339,66 +329,88 @@ const App: React.FC = () => {
         />
       </aside>
 
+      {/* Backdrop */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 z-20 bg-black/20 backdrop-blur-sm transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Right Pane (Main Window) */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative bg-white dark:bg-slate-950">
         
-        {/* ... (gradient overlay) ... */}
-        
-        <div className="flex-1 overflow-y-auto px-8 md:px-12 pb-8 custom-scrollbar">
-           <div className="max-w-5xl mx-auto w-full">
-            {/* Header */}
-            <div className="sticky top-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm z-10 pt-8 pb-2 transition-colors duration-200">
-              <Header 
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                sortOption={sortOption}
-                onSortChange={setSortOption}
-                onOpenSettings={() => setIsSettingsOpen(true)}
-                isAppPinned={isAppPinned}
-                onToggleAppPin={handleToggleAppPin}
-              />
-              <div className="h-px w-full bg-gray-100 dark:bg-slate-800 mt-4 mb-2 transition-colors duration-200"></div>
-            </div>
+        <div className="flex flex-col h-full">
+          {/* Header - 10-12% height approx */}
+          <div className="flex-none bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm z-10 px-4 pt-4 transition-colors duration-200" style={{ height: 'min-content' }}>
+            <Header 
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              sortOption={sortOption}
+              onSortChange={setSortOption}
+              onOpenSettings={() => setIsSettingsOpen(true)}
+              isAppPinned={isAppPinned}
+              onToggleAppPin={handleToggleAppPin}
+            />
+            <div className="h-px w-full bg-gray-100 dark:bg-slate-800 mt-2 transition-colors duration-200"></div>
+          </div>
 
-            {/* Clips List */}
-            <div className="space-y-1">
-              {filteredClips.length > 0 ? (
-                filteredClips.map((clip, index) => {
-                  const collection = collections.find(c => c.id === clip.collectionId);
-                  const isMenuOpen = activeContextMenu?.id === clip.id;
-                  
-                  return (
-                    <ClipItem 
-                      key={clip.id} 
-                      clip={clip} 
-                      collection={collection}
-                      collections={collections}
-                      isSelected={index === selectedIndex}
-                      onDelete={handleClipDelete}
-                      onPin={handleClipPin}
-                      onEdit={initiateClipEdit}
-                      onMoveToCollection={handleMoveToCollection}
-                      onLabelColor={handleClipLabelColor}
-                      onLabelText={initiateClipLabelText}
-                      onRemoveLabel={handleRemoveClipLabel}
-                      onColor={handleClipColor}
-                      isMenuOpen={isMenuOpen}
-                      menuPosition={isMenuOpen ? activeContextMenu : null}
-                      onContextMenuOpen={handleContextMenuOpen}
-                      onClick={() => {
-                          setSelectedIndex(index); // update selection on click
-                          handlePasteClip(clip.id);
-                      }}
-                    />
-                  );
-                })
-              ) : (
-                <div className="py-20 text-center text-gray-400 dark:text-slate-600">
-                  <p>No clips found{searchQuery ? ` matching "${searchQuery}"` : ''}.</p>
-                </div>
-              )}
+          {/* Clips List Area - 75-80% height approx */}
+          <div className="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar">
+            <div className="w-full">
+              {/* Clips List */}
+              <div className="space-y-2 mt-2">
+                {filteredClips.length > 0 ? (
+                  filteredClips.map((clip, index) => {
+                    const collection = collections.find(c => c.id === clip.collectionId);
+                    const isMenuOpen = activeContextMenu?.id === clip.id;
+                    
+                    return (
+                      <ClipItem 
+                        key={clip.id} 
+                        clip={clip} 
+                        collection={collection}
+                        collections={collections}
+                        isSelected={index === selectedIndex}
+                        onDelete={handleClipDelete}
+                        onPin={handleClipPin}
+                        onEdit={initiateClipEdit}
+                        onMoveToCollection={handleMoveToCollection}
+                        onLabelColor={handleClipLabelColor}
+                        onLabelText={initiateClipLabelText}
+                        onRemoveLabel={handleRemoveClipLabel}
+                        onColor={handleClipColor}
+                        isMenuOpen={isMenuOpen}
+                        menuPosition={isMenuOpen ? activeContextMenu : null}
+                        onContextMenuOpen={handleContextMenuOpen}
+                        onClick={() => {
+                            setSelectedIndex(index); // update selection on click
+                            handlePasteClip(clip.id);
+                        }}
+                      />
+                    );
+                  })
+                ) : (
+                  <div className="py-20 text-center text-gray-400 dark:text-slate-600">
+                    <p>No clips found{searchQuery ? ` matching "${searchQuery}"` : ''}.</p>
+                  </div>
+                )}
+              </div>
             </div>
-           </div>
+          </div>
+
+          {/* Optional Footer/Settings - 8-10% height */}
+          {!isSidebarOpen && (
+            <div className="flex-none p-3 border-t border-gray-100 dark:border-slate-800 flex justify-between items-center text-xs text-slate-400 px-4">
+               <button 
+                  onClick={toggleSidebar}
+                  className="hover:text-slate-600 dark:hover:text-slate-300 font-medium"
+               >
+                 Show Sidebar
+               </button>
+               <div>{filteredClips.length} clips</div>
+            </div>
+          )}
         </div>
       </main>
       
