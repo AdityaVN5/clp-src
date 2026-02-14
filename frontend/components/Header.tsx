@@ -54,6 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Search Bar */}
       <div className="relative w-full md:w-96 group">
         <input 
+          id="search-input"
           type="text" 
           placeholder="Search..." 
           value={searchQuery}

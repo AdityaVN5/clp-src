@@ -17,6 +17,7 @@ interface ClipItemProps {
   onRemoveLabel: (id: string) => void;
   onColor: (id: string, bg: string) => void;
   onClick: () => void;
+  isSelected?: boolean; // New prop
   // Context Menu Props
   isMenuOpen: boolean;
   menuPosition: { x: number, y: number } | null;
@@ -81,6 +82,7 @@ export const ClipItem: React.FC<ClipItemProps> = ({
   onRemoveLabel,
   onColor,
   onClick,
+  isSelected,
   isMenuOpen,
   menuPosition,
   onContextMenuOpen
@@ -100,14 +102,26 @@ export const ClipItem: React.FC<ClipItemProps> = ({
   // If default white, use dark slate.
   const customBg = clip.backgroundColor && clip.backgroundColor !== '#ffffff' ? clip.backgroundColor : undefined;
 
+  // Ref for scrolling into view
+  const itemRef = React.useRef<HTMLDivElement>(null);
+  
+  React.useEffect(() => {
+    if (isSelected && itemRef.current) {
+      itemRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [isSelected]);
+
   return (
     <>
       <div 
+        ref={itemRef}
         onClick={onClick}
         onContextMenu={handleContextMenu}
         className={`
-          group relative flex flex-col sm:flex-row sm:items-center py-6 border-b border-gray-100 dark:border-slate-800 hover:shadow-md transition-all px-4 -mx-2 rounded-xl mb-2 cursor-pointer
-          ${!customBg ? 'bg-white dark:bg-slate-900/50' : ''}
+          group relative flex flex-col sm:flex-row sm:items-center py-6 border-b transition-all px-4 -mx-2 rounded-xl mb-2 cursor-pointer
+          ${isSelected 
+             ? 'ring-2 ring-blue-500 shadow-md bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' 
+             : `border-gray-100 dark:border-slate-800 hover:shadow-md ${!customBg ? 'bg-white dark:bg-slate-900/50' : ''}`}
         `}
         style={customBg ? { backgroundColor: customBg } : {}}
       >

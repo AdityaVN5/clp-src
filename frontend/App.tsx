@@ -269,6 +269,58 @@ const App: React.FC = () => {
     return result;
   }, [clips, activeCollectionId, searchQuery, sortOption]);
 
+  // --- Keyboard Navigation ---
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  // Reset selection when list changes
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [searchQuery, activeCollectionId, sortOption]); // Also maybe when clips change? 
+  // If clips change dynamically (e.g. new copy), we might want to stay on 0 (newest).
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if modals are open
+      if (isModalOpen || isSettingsOpen || isEditClipOpen || isLabelModalOpen) return;
+      
+      // Ignore if input focused (except search which should blur on arrow down?)
+      // Actually standard behavior: arrows navigate list even if search focused?
+      // Let's keep it simple: if search focused, arrows still work? 
+      // If user types in search, arrows usually move cursor. 
+      // So if search input is focused, maybe we shouldn't hijack arrows unless modifier?
+      // Or just prevent default if not in input?
+      // Let's allow navigation always for now, or check activeElement.
+      
+      const isInput = document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement;
+      if (isInput && e.key !== 'Enter' && e.key !== 'Escape') {
+          // If searching, we might want to allow ArrowDown to jump to list
+          if (e.key === 'ArrowDown' && document.activeElement?.id === 'search-input') {
+              e.preventDefault();
+              (document.activeElement as HTMLElement).blur();
+              // focus list?
+          }
+          return;
+      }
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex(prev => Math.min(prev + 1, filteredClips.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex(prev => Math.max(prev - 1, 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const selectedClip = filteredClips[selectedIndex];
+        if (selectedClip) {
+          handlePasteClip(selectedClip.id);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [filteredClips, selectedIndex, isModalOpen, isSettingsOpen, isEditClipOpen, isLabelModalOpen]);
+
   return (
     <div className="flex h-screen bg-white dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-200">
       {/* Left Pane */}
@@ -311,7 +363,7 @@ const App: React.FC = () => {
             {/* Clips List */}
             <div className="space-y-1">
               {filteredClips.length > 0 ? (
-                filteredClips.map(clip => {
+                filteredClips.map((clip, index) => {
                   const collection = collections.find(c => c.id === clip.collectionId);
                   const isMenuOpen = activeContextMenu?.id === clip.id;
                   
@@ -321,6 +373,7 @@ const App: React.FC = () => {
                       clip={clip} 
                       collection={collection}
                       collections={collections}
+                      isSelected={index === selectedIndex}
                       onDelete={handleClipDelete}
                       onPin={handleClipPin}
                       onEdit={initiateClipEdit}
@@ -332,7 +385,10 @@ const App: React.FC = () => {
                       isMenuOpen={isMenuOpen}
                       menuPosition={isMenuOpen ? activeContextMenu : null}
                       onContextMenuOpen={handleContextMenuOpen}
-                      onClick={() => handlePasteClip(clip.id)} // Add click handler for paste
+                      onClick={() => {
+                          setSelectedIndex(index); // update selection on click
+                          handlePasteClip(clip.id);
+                      }}
                     />
                   );
                 })

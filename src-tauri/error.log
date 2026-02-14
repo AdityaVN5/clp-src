@@ -1,0 +1,38 @@
+    Checking app v0.1.0 (E:\Projects\clp\src-tauri)
+warning: unused import: `GlobalShortcutExt`
+   --> src\lib.rs:356:48
+    |
+356 |             use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
+    |                                                ^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+error[E0599]: no associated item named `START` found for struct `Modifiers` in the current scope
+   --> src\lib.rs:361:86
+    |
+361 | ...   if shortcut.matches(tauri_plugin_global_shortcut::Modifiers::START | tauri_plugin_global_shortcut::Modifiers::SHIFT, tauri_plugin_g...
+    |                                                                    ^^^^^ associated item not found in `Modifiers`
+
+error[E0599]: no method named `register_modifiers_shortcut` found for reference `&AppHandle` in the current scope
+   --> src\lib.rs:379:34
+    |
+379 | ...   let _ = app.handle().register_modifiers_shortcut(tauri_plugin_global_shortcut::Modifiers::CONTROL | tauri_plugin_global_shortcut::M...
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^ method not found in `&AppHandle`
+
+warning: unused import: `TimeZone`
+ --> src\lib.rs:2:21
+  |
+2 | use chrono::{Local, TimeZone};
+  |                     ^^^^^^^^
+
+warning: unused variable: `clips_snapshot`
+   --> src\lib.rs:132:13
+    |
+132 |         let clips_snapshot = data.clips.clone();
+    |             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_clips_snapshot`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+For more information about this error, try `rustc --explain E0599`.
+warning: `app` (lib) generated 3 warnings
+error: could not compile `app` (lib) due to 2 previous errors; 3 warnings emitted

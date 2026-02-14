@@ -299,7 +299,7 @@ fn set_always_on_top(value: bool, app_handle: AppHandle) {
 }
 
 #[tauri::command]
-fn paste_clip(id: String, state: State<Arc<ClipboardManager>>, app_handle: AppHandle) {
+fn paste_clip(id: String, state: State<Arc<ClipboardManager>>) { // app_handle removed as not used directly here
      let manager = state.inner();
      let data = manager.data.lock().unwrap();
      
@@ -309,26 +309,31 @@ fn paste_clip(id: String, state: State<Arc<ClipboardManager>>, app_handle: AppHa
              let mut clipboard = Clipboard::new().unwrap();
              clipboard.set_text(content.clone()).unwrap();
              
-             // 2. Hide window (optional but good UX for "paste into other app")
-             // app_handle.get_webview_window("main").unwrap().hide().unwrap();
-             
-             // 3. Simulate Ctrl+V
-             use enigo::{Enigo, Key, Keyboard, Settings};
-             // Enigo::new() might fail if not checked, but usually ok on desktop
+             // 2. Simulate Alt+Tab to switch focus to previous window
+             use enigo::{Enigo, Key, Keyboard, Settings, Direction};
              let mut enigo = Enigo::new(&Settings::default()).unwrap();
              
+             // Alt+Tab simulation
+             enigo.key(Key::Alt, Direction::Press).ok();
+             enigo.key(Key::Tab, Direction::Click).ok();
+             enigo.key(Key::Alt, Direction::Release).ok();
+
+             // Wait for focus switch
+             std::thread::sleep(Duration::from_millis(150));
+
+             // 3. Simulate Paste (Ctrl+V)
              #[cfg(target_os = "macos")]
              {
-                 enigo.key(Key::Meta, enigo::Direction::Press).ok();
-                 enigo.key(Key::Unicode('v'), enigo::Direction::Click).ok();
-                 enigo.key(Key::Meta, enigo::Direction::Release).ok();
+                 enigo.key(Key::Meta, Direction::Press).ok();
+                 enigo.key(Key::Unicode('v'), Direction::Click).ok();
+                 enigo.key(Key::Meta, Direction::Release).ok();
              }
              
              #[cfg(not(target_os = "macos"))]
              {
-                 enigo.key(Key::Control, enigo::Direction::Press).ok();
-                 enigo.key(Key::Unicode('v'), enigo::Direction::Click).ok();
-                 enigo.key(Key::Control, enigo::Direction::Release).ok();
+                 enigo.key(Key::Control, Direction::Press).ok();
+                 enigo.key(Key::Unicode('v'), Direction::Click).ok();
+                 enigo.key(Key::Control, Direction::Release).ok();
              }
          }
      }
@@ -346,6 +351,34 @@ pub fn run() {
             
             // Manage state
             app.manage(manager.clone());
+
+            // Global Shortcut
+            use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState, Modifiers, Code, Shortcut};
+            
+            let ctrl_shift_v = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyV);
+            let cmd_shift_v = Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyV);
+
+            app.handle().plugin(
+                tauri_plugin_global_shortcut::Builder::new().with_handler(move |app, shortcut, event| {
+                    if event.state == ShortcutState::Pressed  {
+                        if shortcut == &ctrl_shift_v || shortcut == &cmd_shift_v {
+                           if let Some(window) = app.get_webview_window("main") {
+                               if window.is_visible().unwrap_or(false) {
+                                   window.hide().unwrap();
+                               } else {
+                                   window.show().unwrap();
+                                   window.set_focus().unwrap();
+                               }
+                           }
+                        }
+                    }
+                })
+                .build(),
+            )?;
+
+            // Register shortcuts
+            let _ = app.handle().global_shortcut().register(ctrl_shift_v);
+            let _ = app.handle().global_shortcut().register(cmd_shift_v);
 
             // Background Thread for Clipboard Polling
             let manager_clone = manager.clone();
