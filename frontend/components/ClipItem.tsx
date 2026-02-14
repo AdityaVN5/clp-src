@@ -16,6 +16,7 @@ interface ClipItemProps {
   onLabelText: (id: string, text: string) => void;
   onRemoveLabel: (id: string) => void;
   onColor: (id: string, bg: string) => void;
+  onClick: () => void;
   // Context Menu Props
   isMenuOpen: boolean;
   menuPosition: { x: number, y: number } | null;
@@ -79,6 +80,7 @@ export const ClipItem: React.FC<ClipItemProps> = ({
   onLabelText,
   onRemoveLabel,
   onColor,
+  onClick,
   isMenuOpen,
   menuPosition,
   onContextMenuOpen
@@ -101,9 +103,10 @@ export const ClipItem: React.FC<ClipItemProps> = ({
   return (
     <>
       <div 
+        onClick={onClick}
         onContextMenu={handleContextMenu}
         className={`
-          group relative flex flex-col sm:flex-row sm:items-center py-6 border-b border-gray-100 dark:border-slate-800 hover:shadow-md transition-all px-4 -mx-2 rounded-xl mb-2
+          group relative flex flex-col sm:flex-row sm:items-center py-6 border-b border-gray-100 dark:border-slate-800 hover:shadow-md transition-all px-4 -mx-2 rounded-xl mb-2 cursor-pointer
           ${!customBg ? 'bg-white dark:bg-slate-900/50' : ''}
         `}
         style={customBg ? { backgroundColor: customBg } : {}}

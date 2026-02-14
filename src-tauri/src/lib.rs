@@ -291,6 +291,49 @@ fn delete_clip_label(id: String, state: State<Arc<ClipboardManager>>) -> Vec<Cli
     manager.data.lock().unwrap().clips.clone()
 }
 
+#[tauri::command]
+fn set_always_on_top(value: bool, app_handle: AppHandle) {
+    if let Some(window) = app_handle.get_webview_window("main") {
+        window.set_always_on_top(value).unwrap_or_else(|e| eprintln!("Failed to set always on top: {}", e));
+    }
+}
+
+#[tauri::command]
+fn paste_clip(id: String, state: State<Arc<ClipboardManager>>, app_handle: AppHandle) {
+     let manager = state.inner();
+     let data = manager.data.lock().unwrap();
+     
+     if let Some(clip) = data.clips.iter().find(|c| c.id == id) {
+         if let Some(content) = &clip.content {
+             // 1. Write to clipboard
+             let mut clipboard = Clipboard::new().unwrap();
+             clipboard.set_text(content.clone()).unwrap();
+             
+             // 2. Hide window (optional but good UX for "paste into other app")
+             // app_handle.get_webview_window("main").unwrap().hide().unwrap();
+             
+             // 3. Simulate Ctrl+V
+             use enigo::{Enigo, Key, Keyboard, Settings};
+             // Enigo::new() might fail if not checked, but usually ok on desktop
+             let mut enigo = Enigo::new(&Settings::default()).unwrap();
+             
+             #[cfg(target_os = "macos")]
+             {
+                 enigo.key(Key::Meta, enigo::Direction::Press).ok();
+                 enigo.key(Key::Unicode('v'), enigo::Direction::Click).ok();
+                 enigo.key(Key::Meta, enigo::Direction::Release).ok();
+             }
+             
+             #[cfg(not(target_os = "macos"))]
+             {
+                 enigo.key(Key::Control, enigo::Direction::Press).ok();
+                 enigo.key(Key::Unicode('v'), enigo::Direction::Click).ok();
+                 enigo.key(Key::Control, enigo::Direction::Release).ok();
+             }
+         }
+     }
+}
+
 // --- INITIALIZATION ---
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -336,7 +379,9 @@ pub fn run() {
             update_collection,
             set_clip_color,
             set_clip_label,
-            delete_clip_label
+            delete_clip_label,
+            set_always_on_top,
+            paste_clip
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

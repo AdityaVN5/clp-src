@@ -64,8 +64,6 @@ const App: React.FC = () => {
 
     const unlistenChanged = listen<Clip>('clipboard-changed', (event) => {
        setClips(prev => [event.payload, ...prev]); 
-       // Optionally fetch all valid clips to ensure consistency
-       // invoke<Clip[]>('get_clips').then(setClips);
     });
 
     return () => {
@@ -87,6 +85,16 @@ const App: React.FC = () => {
   };
 
   // --- Dynamic Collection Counts ---
+
+  const handleToggleAppPin = () => {
+    const newValue = !isAppPinned;
+    setIsAppPinned(newValue);
+    invoke('set_always_on_top', { value: newValue });
+  };
+  
+  const handlePasteClip = async (clipId: string) => {
+    await invoke('paste_clip', { id: clipId });
+  };
   const collectionsWithCounts = useMemo(() => {
     return collections.map(col => ({
       ...col,
@@ -129,8 +137,6 @@ const App: React.FC = () => {
         iconName: data.iconName 
       }).then(cols => {
         setCollections(cols);
-        // Set active to new collection? Need to find it or backend custom return
-        // For simplicity, just update list. The backend returns updated list.
       });
     }
     setIsModalOpen(false);
@@ -168,13 +174,6 @@ const App: React.FC = () => {
   };
 
   const handleClipLabelColor = (id: string, color: ColorTheme | null) => {
-    // We reuse set_clip_label but need to know current text or assume separated commands
-    // I implemented set_clip_label(id, text, color). 
-    // And set_clip_color is for background.
-    // Let's use set_clip_label command if we have text, or just update color if text is null?
-    // Actually, backend set_clip_label takes text and optional color.
-    // If we only want to change color, we need the text.
-    // Let's find the clip first.
     const clip = clips.find(c => c.id === id);
     if (clip) {
         invoke<Clip[]>('set_clip_label', { id, text: clip.labelText || '', color }).then(setClips);
@@ -290,7 +289,8 @@ const App: React.FC = () => {
 
       {/* Right Pane (Main Window) */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative bg-white dark:bg-slate-950">
-        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-b from-gray-50/50 dark:from-slate-900/50 to-transparent z-10 pointer-events-none"></div>
+        
+        {/* ... (gradient overlay) ... */}
         
         <div className="flex-1 overflow-y-auto px-8 md:px-12 pb-8 custom-scrollbar">
            <div className="max-w-5xl mx-auto w-full">
@@ -303,7 +303,7 @@ const App: React.FC = () => {
                 onSortChange={setSortOption}
                 onOpenSettings={() => setIsSettingsOpen(true)}
                 isAppPinned={isAppPinned}
-                onToggleAppPin={() => setIsAppPinned(!isAppPinned)}
+                onToggleAppPin={handleToggleAppPin}
               />
               <div className="h-px w-full bg-gray-100 dark:bg-slate-800 mt-4 mb-2 transition-colors duration-200"></div>
             </div>
@@ -320,11 +320,11 @@ const App: React.FC = () => {
                       key={clip.id} 
                       clip={clip} 
                       collection={collection}
-                      collections={collections} // Pass collections list
+                      collections={collections}
                       onDelete={handleClipDelete}
                       onPin={handleClipPin}
                       onEdit={initiateClipEdit}
-                      onMoveToCollection={handleMoveToCollection} // Pass move handler
+                      onMoveToCollection={handleMoveToCollection}
                       onLabelColor={handleClipLabelColor}
                       onLabelText={initiateClipLabelText}
                       onRemoveLabel={handleRemoveClipLabel}
@@ -332,6 +332,7 @@ const App: React.FC = () => {
                       isMenuOpen={isMenuOpen}
                       menuPosition={isMenuOpen ? activeContextMenu : null}
                       onContextMenuOpen={handleContextMenuOpen}
+                      onClick={() => handlePasteClip(clip.id)} // Add click handler for paste
                     />
                   );
                 })
@@ -344,7 +345,7 @@ const App: React.FC = () => {
            </div>
         </div>
       </main>
-
+      
       {/* Collection Modal */}
       <CollectionModal 
         isOpen={isModalOpen}
@@ -377,6 +378,7 @@ const App: React.FC = () => {
         currentTheme={theme}
         onThemeChange={setTheme}
       />
+
     </div>
   );
 };
