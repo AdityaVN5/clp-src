@@ -424,15 +424,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                  <div className="w-20 h-20 bg-slate-800 dark:bg-slate-700 text-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-slate-200 dark:shadow-none">
                     <span className="font-black text-2xl tracking-tighter">clp</span>
                  </div>
-                 <h3 className="font-bold text-2xl text-slate-800 dark:text-white mb-1">Clp Manager</h3>
+                 <h3 className="font-bold text-2xl text-slate-800 dark:text-white mb-1">Clp - Clipboard Protocol</h3>
+                 <p className="text-gray-500 font-medium mb-8">Copy Like a Pro</p>
                  <p className="text-gray-500 font-medium mb-8">Version 1.0.0 (Beta)</p>
                  
                  <div className="max-w-sm mx-auto space-y-4">
                     <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 text-sm text-gray-600 dark:text-gray-400">
                        <p className="font-semibold text-slate-800 dark:text-slate-200 mb-1">Credits</p>
                        <p>Designed with ❤️ for productivity lovers.</p>
+                       <p>Clipboard by Aditya</p>
                     </div>
-                    <p className="text-xs text-gray-400">&copy; 2024 Clp Inc. All rights reserved.</p>
+                    <p className="text-xs text-gray-400">&copy; 2026 Clp Inc. All rights reserved.</p>
                  </div>
               </div>
             )}

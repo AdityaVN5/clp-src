@@ -131,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           title={!isOpen ? "New Collection" : undefined}
         >
           <PlusCircle size={24} strokeWidth={1.5} />
-          {isOpen && <span>New collection</span>}
+          {isOpen && <span className="text-sm">New</span>}
         </button>
       </div>
 
