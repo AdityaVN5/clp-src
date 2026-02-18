@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { 
-  X, Trash2, Shield, Monitor, Keyboard, Info, Camera, Command, 
+  X, Trash2, Shield, Monitor, Keyboard, Info, Command, 
   Database, Save, Edit2, Moon, Sun, Laptop, Bell, HardDrive, Check,
-  Eye, EyeOff, FileText, Image as ImageIcon, ToggleLeft, Activity,
-  Download, Upload
+  ToggleLeft, Activity, Download, Upload
 } from 'lucide-react';
 import { AppTheme } from '../types';
 
@@ -34,19 +33,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   
   // General State
   const [monitoringEnabled, setMonitoringEnabled] = useState(true);
-  const [captureText, setCaptureText] = useState(true);
-  const [captureImages, setCaptureImages] = useState(true);
-  const [ignoreSensitive, setIgnoreSensitive] = useState(true);
-  const [incognitoMode, setIncognitoMode] = useState(false);
+
 
   // Hotkeys State
   const [isEditingHotkeys, setIsEditingHotkeys] = useState(false);
   const [shortcuts, setShortcuts] = useState<Shortcut[]>([
     { id: '1', label: 'Open Clipboard History', keys: ['Ctrl', 'Shift', 'V'] },
-    { id: '2', label: 'Paste Last Copied Item', keys: ['Ctrl', 'Alt', 'V'] },
-    { id: '3', label: 'Paste Without Formatting', keys: ['Ctrl', 'Shift', 'Alt', 'V'] },
-    { id: '4', label: 'Cycle Previous Item', keys: ['Ctrl', 'Shift', '↑'] },
-    { id: '5', label: 'Cycle Next Item', keys: ['Ctrl', 'Shift', '↓'] },
   ]);
 
   // Storage State
@@ -125,52 +117,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <Switch checked={monitoringEnabled} onChange={() => setMonitoringEnabled(!monitoringEnabled)} />
                 </div>
 
-                <div className="h-px bg-gray-100 dark:bg-slate-800" />
 
-                {/* 2 & 3) Content Types */}
-                <div className="space-y-4">
-                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Content Types</h4>
-                   <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <FileText size={16} className="text-slate-400" /> Capture Text
-                      </div>
-                      <Switch checked={captureText} onChange={() => setCaptureText(!captureText)} disabled={!monitoringEnabled} />
-                   </div>
-                   <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <ImageIcon size={16} className="text-slate-400" /> Capture Images
-                      </div>
-                      <Switch checked={captureImages} onChange={() => setCaptureImages(!captureImages)} disabled={!monitoringEnabled} />
-                   </div>
-                </div>
-
-                 <div className="h-px bg-gray-100 dark:bg-slate-800" />
-
-                {/* 4) Ignore Sensitive */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium text-slate-800 dark:text-white flex items-center gap-2">
-                       {ignoreSensitive ? <EyeOff size={16} className="text-slate-400" /> : <Eye size={16} className="text-slate-400" />}
-                       Ignore Sensitive Data
-                    </h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Don't save items that look like passwords or cards</p>
-                  </div>
-                  <Switch checked={ignoreSensitive} onChange={() => setIgnoreSensitive(!ignoreSensitive)} disabled={!monitoringEnabled} />
-                </div>
-
-                {/* 5) Incognito Mode */}
-                <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/50 rounded-xl">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-bold text-purple-900 dark:text-purple-300 flex items-center gap-2">
-                         <Camera size={16} />
-                         Incognito Mode
-                      </h4>
-                      <p className="text-sm text-purple-700 dark:text-purple-400/80">Stop recording history temporarily</p>
-                    </div>
-                    <Switch checked={incognitoMode} onChange={() => setIncognitoMode(!incognitoMode)} activeColor="bg-purple-500" />
-                  </div>
-                </div>
               </div>
             )}
 
