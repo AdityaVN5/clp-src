@@ -1,23 +1,16 @@
 use arboard::Clipboard;
-use chrono::{Local, TimeZone};
+use chrono::Local;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager, State};
+use std::str::FromStr;
 use uuid::Uuid;
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState, Shortcut};
 
 // --- DATA STRUCTURES ---
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Collection {
-    id: String,
-    name: String,
-    count: usize,
-    color: String,    // "green", "yellow", etc.
-    iconName: String, // "image", "mail", etc.
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Clip {
@@ -39,10 +32,56 @@ pub struct Clip {
     backgroundColor: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Collection {
+    id: String,
+    name: String,
+    count: usize,
+    color: String,    // "green", "yellow", etc.
+    iconName: String, // "image", "mail", etc.
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Settings {
+    pub monitoring_enabled: bool,
+    pub capture_text: bool,
+    pub capture_images: bool,
+    pub ignore_sensitive: bool,
+    pub incognito_mode: bool,
+    pub global_hotkey: String,
+    pub max_clips: Option<usize>,
+    pub memory_limit_mb: usize,
+    pub auto_delete_hours: Option<u64>,
+    pub delete_on_logout: bool,
+    pub theme: String,
+    pub window_behavior: String,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            monitoring_enabled: true,
+            capture_text: true,
+            capture_images: true,
+            ignore_sensitive: true,
+            incognito_mode: false,
+            global_hotkey: "Ctrl+Shift+V".to_string(),
+            max_clips: None, // Unlimited
+            memory_limit_mb: 512,
+            auto_delete_hours: None, // Never
+            delete_on_logout: false,
+            theme: "system".to_string(),
+            window_behavior: "auto-close".to_string(),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct AppData {
     clips: Vec<Clip>,
     collections: Vec<Collection>,
+    #[serde(default)]
+    settings: Settings,
 }
 
 struct ClipboardManager {
@@ -82,6 +121,7 @@ impl ClipboardManager {
         AppData {
             collections: default_collections,
             clips: vec![],
+            settings: Settings::default(),
         }
     }
 
@@ -91,8 +131,46 @@ impl ClipboardManager {
         let _ = fs::write(&self.data_path, content);
     }
 
+    fn enforce_limits(&self, data: &mut AppData) {
+        // Enforce Max Clips
+        if let Some(max) = data.settings.max_clips {
+            if max > 0 && data.clips.len() > max {
+                let diff = data.clips.len() - max;
+                // Remove oldest, but maybe keep pinned? For now, simple truncate.
+                // To support pinned, we'd need to sort or filter.
+                // Let's just truncate for simplicity as per requirements for now.
+                data.clips.truncate(max);
+            }
+        }
+
+        // Enforce Memory Limit
+        let limit_bytes = data.settings.memory_limit_mb * 1024 * 1024;
+        let mut current_size = 0;
+        let mut keep_count = 0;
+
+        for clip in &data.clips {
+            let content_size = clip.content.as_ref().map(|s: &String| s.len()).unwrap_or(0);
+            let image_size = clip.imageSrc.as_ref().map(|s: &String| s.len()).unwrap_or(0);
+            current_size += content_size + image_size;
+            
+            if current_size > limit_bytes && keep_count > 0 {
+                break;
+            }
+            keep_count += 1;
+        }
+
+        if keep_count < data.clips.len() {
+             data.clips.truncate(keep_count);
+        }
+    }
+
     fn add_clip(&self, text: Option<String>, image_data: Option<String>) {
         let mut data = self.data.lock().unwrap();
+
+        // Check if monitoring is enabled
+        if !data.settings.monitoring_enabled {
+            return;
+        }
         
         // Dedup: Check if the last clip is identical
         if let Some(last_clip) = data.clips.first() { 
@@ -124,9 +202,37 @@ impl ClipboardManager {
         // Insert at beginning
         data.clips.insert(0, new_clip.clone());
         
-        // Cap size
-        if data.clips.len() > 100 {
-            data.clips.truncate(100);
+        // Enforce limits
+        // We can't call self.enforce_limits because we hold the lock. 
+        // Logic duplicated or extract to static method / helper that takes &mut AppData
+        
+        // Enforce Max Clips
+        if let Some(max) = data.settings.max_clips {
+            if max > 0 && data.clips.len() > max {
+               data.clips.truncate(max);
+            }
+        } else if data.clips.len() > 1000 { // Default safety cap if unlimited
+             data.clips.truncate(1000);
+        }
+
+        // Enforce Memory Limit
+        let limit_bytes = data.settings.memory_limit_mb * 1024 * 1024;
+        let mut current_size = 0;
+        let mut keep_count = 0;
+
+        for clip in &data.clips {
+            let content_size = clip.content.as_ref().map(|s: &String| s.len()).unwrap_or(0);
+            let image_size = clip.imageSrc.as_ref().map(|s: &String| s.len()).unwrap_or(0);
+            current_size += content_size + image_size;
+            
+            if current_size > limit_bytes && keep_count > 0 {
+                break;
+            }
+            keep_count += 1;
+        }
+
+        if keep_count < data.clips.len() {
+             data.clips.truncate(keep_count);
         }
 
         let clips_snapshot = data.clips.clone();
@@ -134,11 +240,6 @@ impl ClipboardManager {
         
         self.save();
         
-        // Emit update event with just the new clip or full list? 
-        // Emitting just the new clip is efficient, but for simplicity let's rely on commands or specific updates.
-        // Actually, let's emit the full list or just the new clip.
-        // Frontend expects full sync usually or granular updates. 
-        // Let's create an event "clipboard-changed" that sends the new clip.
         let _ = self.app_handle.emit("clipboard-changed", &new_clip);
     }
 }
@@ -292,6 +393,64 @@ fn delete_clip_label(id: String, state: State<Arc<ClipboardManager>>) -> Vec<Cli
 }
 
 #[tauri::command]
+fn get_settings(state: State<Arc<ClipboardManager>>) -> Settings {
+    let data = state.data.lock().unwrap();
+    data.settings.clone()
+}
+
+#[tauri::command]
+fn update_settings(new_settings: Settings, app_handle: AppHandle, state: State<Arc<ClipboardManager>>) -> Result<Settings, String> {
+    let manager = state.inner();
+    let mut data = manager.data.lock().unwrap();
+    
+    // Check if hotkey changed
+    let old_hotkey_str = data.settings.global_hotkey.clone();
+    let new_hotkey_str = new_settings.global_hotkey.clone();
+
+    if old_hotkey_str != new_hotkey_str {
+        // Unregister old
+        if let Ok(old_shortcut) = Shortcut::from_str(&old_hotkey_str) {
+             let _ = app_handle.global_shortcut().unregister(old_shortcut);
+        }
+
+        // Register new
+        match Shortcut::from_str(&new_hotkey_str) {
+            Ok(new_shortcut) => {
+                if let Err(e) = app_handle.global_shortcut().register(new_shortcut) {
+                     // Registration failed (collision or invalid)
+                     // Revert to old setting? Or just warn?
+                     // Return error string
+                     return Err(format!("Failed to register hotkey '{}': {}", new_hotkey_str, e));
+                }
+                // Success
+                data.settings = new_settings;
+            }
+            Err(e) => {
+                 return Err(format!("Invalid hotkey format '{}': {}", new_hotkey_str, e));
+            }
+        }
+    } else {
+        data.settings = new_settings;
+    }
+    
+    // Enforce limits immediately
+    manager.enforce_limits(&mut data);
+    
+    drop(data);
+    manager.save();
+    Ok(manager.data.lock().unwrap().settings.clone())
+}
+
+#[tauri::command]
+fn clear_all_clips(state: State<Arc<ClipboardManager>>) {
+    let manager = state.inner();
+    let mut data = manager.data.lock().unwrap();
+    data.clips.clear();
+    drop(data);
+    manager.save();
+}
+
+#[tauri::command]
 fn set_always_on_top(value: bool, app_handle: AppHandle) {
     if let Some(window) = app_handle.get_webview_window("main") {
         window.set_always_on_top(value).unwrap_or_else(|e| eprintln!("Failed to set always on top: {}", e));
@@ -353,15 +512,22 @@ pub fn run() {
             app.manage(manager.clone());
 
             // Global Shortcut
-            use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState, Modifiers, Code, Shortcut};
-            
-            let ctrl_shift_v = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyV);
-            let cmd_shift_v = Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyV);
+            // Register hotkey from settings
+            let settings = manager.data.lock().unwrap().settings.clone();
+            let hotkey_str = settings.global_hotkey;
 
             app.handle().plugin(
                 tauri_plugin_global_shortcut::Builder::new().with_handler(move |app, shortcut, event| {
                     if event.state == ShortcutState::Pressed  {
-                        if shortcut == &ctrl_shift_v || shortcut == &cmd_shift_v {
+                         // We need to match against current hotkey? 
+                         // Or just toggle main window?
+                         // The handler receives ALL shortcuts registered by this plugin.
+                         // So we just check if it's THE shortcut we care about?
+                         
+                         // Simple logic: Toggle main window for ANY registered shortcut in this handler context
+                         // for now, since we only have one global hotkey feature.
+                         // Or we can check if shortcut matches current settings.
+                         
                            if let Some(window) = app.get_webview_window("main") {
                                if window.is_visible().unwrap_or(false) {
                                    window.hide().unwrap();
@@ -370,15 +536,17 @@ pub fn run() {
                                    window.set_focus().unwrap();
                                }
                            }
-                        }
                     }
                 })
                 .build(),
             )?;
 
-            // Register shortcuts
-            let _ = app.handle().global_shortcut().register(ctrl_shift_v);
-            let _ = app.handle().global_shortcut().register(cmd_shift_v);
+            // Register initial
+            if let Ok(shortcut) = Shortcut::from_str(&hotkey_str) {
+                let _ = app.handle().global_shortcut().register(shortcut);
+            } else {
+                 eprintln!("Failed to parse initial hotkey: {}", hotkey_str);
+            }
 
             // Background Thread for Clipboard Polling
             let manager_clone = manager.clone();
@@ -414,8 +582,25 @@ pub fn run() {
             set_clip_label,
             delete_clip_label,
             set_always_on_top,
-            paste_clip
+            paste_clip,
+            get_settings,
+            update_settings,
+            clear_all_clips
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+             if let tauri::RunEvent::ExitRequested { .. } = event {
+                 let manager = app_handle.state::<Arc<ClipboardManager>>();
+                 // We need to lock to check settings
+                 // Note: inner() gives &Arc<ClipboardManager>, so we deref
+                 let manager = manager.inner();
+                 let mut data = manager.data.lock().unwrap();
+                 if data.settings.delete_on_logout {
+                     data.clips.clear();
+                     drop(data); // release lock before save
+                     manager.save();
+                 }
+             }
+        });
 }

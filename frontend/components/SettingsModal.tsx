@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import { 
   X, Trash2, Shield, Monitor, Keyboard, Info, Command, 
   Database, Save, Edit2, Moon, Sun, Laptop, Bell, HardDrive, Check,
@@ -10,9 +11,40 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onClearHistory: () => void;
-  currentTheme: AppTheme;
   onThemeChange: (theme: AppTheme) => void;
+  setMonitoringEnabled: (enabled: boolean) => void;
+  // ... other props if needed
 }
+
+export interface Settings {
+  monitoring_enabled: boolean;
+  capture_text: boolean;
+  capture_images: boolean;
+  ignore_sensitive: boolean;
+  incognito_mode: boolean;
+  global_hotkey: string;
+  max_clips: number | null;
+  memory_limit_mb: number;
+  auto_delete_hours: number | null;
+  delete_on_logout: boolean;
+  theme: string;
+  window_behavior: string;
+}
+
+const defaultSettings: Settings = {
+  monitoring_enabled: true,
+  capture_text: true,
+  capture_images: true,
+  ignore_sensitive: true,
+  incognito_mode: false,
+  global_hotkey: "Ctrl+Shift+V",
+  max_clips: null,
+  memory_limit_mb: 512,
+  auto_delete_hours: null,
+  delete_on_logout: false,
+  theme: "system",
+  window_behavior: "auto-close",
+};
 
 type Tab = 'general' | 'hotkeys' | 'storage' | 'appearance' | 'about';
 
@@ -30,47 +62,79 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onThemeChange
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('general');
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
+  const [isRecording, setIsRecording] = useState(false);
   
-  // General State
-  const [monitoringEnabled, setMonitoringEnabled] = useState(true);
+  useEffect(() => {
+    if (isRecording) {
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isRecording]);
 
+  useEffect(() => {
+    if (isOpen) {
+      loadSettings();
+    }
+  }, [isOpen]);
 
-  // Hotkeys State
-  const [isEditingHotkeys, setIsEditingHotkeys] = useState(false);
-  const [shortcuts, setShortcuts] = useState<Shortcut[]>([
-    { id: '1', label: 'Open Clipboard History', keys: ['Ctrl', 'Shift', 'V'] },
-  ]);
-
-  // Storage State
-  const [maxClips, setMaxClips] = useState(''); // Empty = Unlimited
-  const [autoDeleteTime, setAutoDeleteTime] = useState('never');
-  const [deleteOnLogout, setDeleteOnLogout] = useState(false);
-  const [memoryLimit, setMemoryLimit] = useState('512');
-
-  // Appearance State
-  const [panelStyle, setPanelStyle] = useState('center');
-  const [trayBehavior, setTrayBehavior] = useState({
-    quickAccess: true,
-    pause: false,
-    openHistory: true,
-    exit: true
-  });
-  const [notifications, setNotifications] = useState(true);
-  const [windowBehavior, setWindowBehavior] = useState('auto-close');
-
-  if (!isOpen) return null;
-
-  const handleClear = () => {
-    if (window.confirm('Are you sure you want to clear all clipboard history? This action cannot be undone.')) {
-      onClearHistory();
-      onClose();
+  const loadSettings = async () => {
+    try {
+      const s = await invoke<Settings>('get_settings');
+      setSettings(s);
+      onThemeChange(s.theme as AppTheme); // Sync theme on load
+    } catch (e) {
+      console.error('Failed to load settings', e);
     }
   };
 
-  const handleShortcutChange = (id: string, value: string) => {
-    // Simple parser for UI demo: splits by + or space
-    const newKeys = value.split(/[ +]+/).filter(k => k.trim() !== '');
-    setShortcuts(prev => prev.map(s => s.id === id ? { ...s, keys: newKeys } : s));
+  const updateSetting = async (key: keyof Settings, value: any) => {
+     const newSettings = { ...settings, [key]: value };
+     setSettings(newSettings); // Optimistic
+     
+     if (key === 'theme') {
+         onThemeChange(value as AppTheme);
+     }
+
+     try {
+        await invoke('update_settings', { newSettings });
+     } catch (e) {
+        console.error('Failed to save setting', e);
+     }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isRecording) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const keys = [];
+    if (e.ctrlKey) keys.push('Ctrl');
+    if (e.shiftKey) keys.push('Shift');
+    if (e.altKey) keys.push('Alt');
+    if (e.metaKey) keys.push('Super');
+    
+    // Get key code
+    let key = e.key.toUpperCase();
+    if (key === 'CONTROL' || key === 'SHIFT' || key === 'ALT' || key === 'META') {
+        // Just modifiers pressed
+    } else {
+        keys.push(key);
+        // End recording if we have a non-modifier key
+        const hotkeyStr = keys.join('+');
+        updateSetting('global_hotkey', hotkeyStr);
+        setIsRecording(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const handleClear = async () => {
+    if (window.confirm('Are you sure you want to clear all clipboard history? This action cannot be undone.')) {
+      await invoke('clear_all_clips');
+      onClearHistory(); // Updates parent validation if needed
+      onClose();
+    }
   };
 
   return (
@@ -114,7 +178,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </h4>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Master switch to enable or disable recording</p>
                   </div>
-                  <Switch checked={monitoringEnabled} onChange={() => setMonitoringEnabled(!monitoringEnabled)} />
+                  <Switch checked={settings.monitoring_enabled} onChange={() => updateSetting('monitoring_enabled', !settings.monitoring_enabled)} />
                 </div>
 
 
@@ -127,50 +191,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 rounded-xl p-4 mb-2">
                     <p className="text-blue-800 dark:text-blue-300 text-sm flex items-start gap-2">
                        <Command size={16} className="mt-0.5 shrink-0" />
-                       Global hotkeys allow you to access Clp features from any application.
+                       Global hotkey to toggle the Clipboard History window.
                     </p>
                   </div>
 
-                  <div className="flex justify-end mb-2">
-                    {isEditingHotkeys ? (
-                      <button 
-                        onClick={() => setIsEditingHotkeys(false)}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
-                      >
-                        <Save size={16} /> Save Changes
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={() => setIsEditingHotkeys(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
-                      >
-                        <Edit2 size={16} /> Edit Hotkeys
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    {shortcuts.map((shortcut) => (
-                      <div key={shortcut.id} className="flex items-center justify-between py-3 border-b border-gray-50 dark:border-slate-800 last:border-0 group">
-                        <span className="text-slate-700 dark:text-slate-300 font-medium text-sm">{shortcut.label}</span>
+                  <div className="flex items-center justify-between py-3 border-b border-gray-50 dark:border-slate-800">
+                    <span className="text-slate-700 dark:text-slate-300 font-medium text-sm">Open Clipboard History</span>
+                    <div className="flex gap-2 items-center">
                         <div className="flex gap-1">
-                          {isEditingHotkeys ? (
-                            <input 
-                              type="text" 
-                              defaultValue={shortcut.keys.join(' + ')}
-                              className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-md text-sm text-slate-800 dark:text-white font-medium focus:ring-2 focus:ring-blue-100 outline-none w-48 text-center"
-                              onChange={(e) => handleShortcutChange(shortcut.id, e.target.value)}
-                            />
-                          ) : (
-                            shortcut.keys.map((k, i) => (
-                              <kbd key={i} className="px-2 py-1 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md text-xs font-bold text-gray-600 dark:text-gray-400 min-w-[24px] text-center shadow-sm font-sans">
-                                {k}
-                              </kbd>
-                            ))
-                          )}
+                            {isRecording ? (
+                                <span className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-md text-sm text-blue-700 dark:text-blue-300 font-medium animate-pulse">
+                                    Press keys...
+                                </span>
+                            ) : (
+                                settings.global_hotkey.split('+').map((k, i) => (
+                                    <kbd key={i} className="px-2 py-1 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md text-xs font-bold text-gray-600 dark:text-gray-400 min-w-[24px] text-center shadow-sm font-sans">
+                                        {k}
+                                    </kbd>
+                                ))
+                            )}
                         </div>
-                      </div>
-                    ))}
+                        <button 
+                            onClick={() => setIsRecording(!isRecording)}
+                            className={`p-2 rounded-lg transition-colors ${isRecording ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'hover:bg-gray-100 dark:hover:bg-slate-800 text-slate-500'}`}
+                            title={isRecording ? "Cancel Recording" : "Record Shortcut"}
+                        >
+                            {isRecording ? <X size={16} /> : <Edit2 size={16} />}
+                        </button>
+                    </div>
                   </div>
                </div>
             )}
@@ -193,8 +241,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       <input 
                         type="number" 
                         placeholder="Unlimited" 
-                        value={maxClips}
-                        onChange={(e) => setMaxClips(e.target.value)}
+                        value={settings.max_clips ?? ''}
+                        onChange={(e) => updateSetting('max_clips', e.target.value ? parseInt(e.target.value) : null)}
                         className="w-32 px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 transition-all text-right dark:text-white"
                       />
                     </div>
@@ -207,14 +255,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       <div className="flex items-center gap-2">
                         <input 
                           type="range" 
-                          min="128" 
-                          max="2048" 
-                          step="128"
-                          value={memoryLimit}
-                          onChange={(e) => setMemoryLimit(e.target.value)}
+                          min="16" 
+                          max="128" 
+                          step="16"
+                          value={settings.memory_limit_mb}
+                          onChange={(e) => updateSetting('memory_limit_mb', parseInt(e.target.value))}
                           className="w-32 accent-blue-600"
                         />
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300 w-16 text-right">{memoryLimit} MB</span>
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300 w-16 text-right">{settings.memory_limit_mb} MB</span>
                       </div>
                     </div>
                   </div>
@@ -231,21 +279,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className="flex items-center justify-between">
                       <span className="text-slate-700 dark:text-slate-300 font-medium text-sm">Auto-delete after</span>
                       <select 
-                        value={autoDeleteTime}
-                        onChange={(e) => setAutoDeleteTime(e.target.value)}
+                        value={settings.auto_delete_hours ?? 'never'}
+                        onChange={(e) => updateSetting('auto_delete_hours', e.target.value === 'never' ? null : parseInt(e.target.value))}
                         className="px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 dark:text-white"
                       >
                         <option value="never">Never</option>
-                        <option value="1h">1 Hour</option>
-                        <option value="24h">24 Hours</option>
-                        <option value="7d">7 Days</option>
-                        <option value="30d">30 Days</option>
+                        <option value="1">1 Hour</option>
+                        <option value="24">24 Hours</option>
+                        <option value="168">7 Days</option>
+                        <option value="720">30 Days</option>
                       </select>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <span className="text-slate-700 dark:text-slate-300 font-medium text-sm">Delete on PC Logout / Shutdown</span>
-                      <Switch checked={deleteOnLogout} onChange={() => setDeleteOnLogout(!deleteOnLogout)} />
+                      <Switch checked={settings.delete_on_logout} onChange={() => updateSetting('delete_on_logout', !settings.delete_on_logout)} />
                     </div>
 
                     <div className="pt-2">
@@ -289,20 +337,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       <ThemeOption 
                         label="System" 
                         icon={<Laptop size={20} />} 
-                        active={currentTheme === 'system'} 
-                        onClick={() => onThemeChange('system')} 
+                        active={settings.theme === 'system'} 
+                        onClick={() => updateSetting('theme', 'system')} 
                       />
                       <ThemeOption 
                         label="Light" 
                         icon={<Sun size={20} />} 
-                        active={currentTheme === 'light'} 
-                        onClick={() => onThemeChange('light')} 
+                        active={settings.theme === 'light'} 
+                        onClick={() => updateSetting('theme', 'light')} 
                       />
                       <ThemeOption 
                         label="Dark" 
                         icon={<Moon size={20} />} 
-                        active={currentTheme === 'dark'} 
-                        onClick={() => onThemeChange('dark')} 
+                        active={settings.theme === 'dark'} 
+                        onClick={() => updateSetting('theme', 'dark')} 
                       />
                    </div>
                 </section>
@@ -311,24 +359,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <section>
                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Window & Panel</h4>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-700 dark:text-slate-300 font-medium text-sm">Popup / Panel Style</span>
-                      <select 
-                        value={panelStyle}
-                        onChange={(e) => setPanelStyle(e.target.value)}
-                        className="px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 dark:text-white w-48"
-                      >
-                        <option value="cursor">Floating near cursor</option>
-                        <option value="center">Center window</option>
-                        <option value="sidebar">Sidebar panel</option>
-                      </select>
-                    </div>
-
+                    {/* Panel Style removed as it wasn't in backend settings yet - hiding for now or can implement if needed */}
+                    
                     <div className="flex items-center justify-between">
                       <span className="text-slate-700 dark:text-slate-300 font-medium text-sm">Window Behavior</span>
                       <select 
-                        value={windowBehavior}
-                        onChange={(e) => setWindowBehavior(e.target.value)}
+                        value={settings.window_behavior}
+                        onChange={(e) => updateSetting('window_behavior', e.target.value)}
                         className="px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 dark:text-white w-48"
                       >
                         <option value="auto-close">Auto close after paste</option>
@@ -339,26 +376,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </div>
                 </section>
 
-                {/* Notifications */}
-                <section>
-                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Notifications</h4>
+                {/* Notifications - Placeholder / Future */}
+                <section className="opacity-50 pointer-events-none">
+                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Notifications (Coming Soon)</h4>
                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium text-sm">
                         <Bell size={16} className="text-slate-400" />
                         Show notification on copy
                       </div>
-                      <Switch checked={notifications} onChange={() => setNotifications(!notifications)} />
+                      <Switch checked={false} onChange={() => {}} />
                    </div>
                 </section>
 
-                {/* Tray Icon */}
-                <section>
-                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Tray Icon Menu</h4>
+                {/* Tray Icon - Placeholder / Future */}
+                <section className="opacity-50 pointer-events-none">
+                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Tray Icon Menu (Coming Soon)</h4>
                    <div className="grid grid-cols-2 gap-3">
-                      <Checkbox label="Quick Access" checked={trayBehavior.quickAccess} onChange={() => setTrayBehavior({...trayBehavior, quickAccess: !trayBehavior.quickAccess})} />
-                      <Checkbox label="Pause Recording" checked={trayBehavior.pause} onChange={() => setTrayBehavior({...trayBehavior, pause: !trayBehavior.pause})} />
-                      <Checkbox label="Open History" checked={trayBehavior.openHistory} onChange={() => setTrayBehavior({...trayBehavior, openHistory: !trayBehavior.openHistory})} />
-                      <Checkbox label="Exit App" checked={trayBehavior.exit} onChange={() => setTrayBehavior({...trayBehavior, exit: !trayBehavior.exit})} />
+                      <Checkbox label="Quick Access" checked={true} onChange={() => {}} />
+                      <Checkbox label="Pause Recording" checked={false} onChange={() => {}} />
+                      <Checkbox label="Open History" checked={true} onChange={() => {}} />
+                      <Checkbox label="Exit App" checked={true} onChange={() => {}} />
                    </div>
                 </section>
 
