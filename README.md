@@ -8,8 +8,8 @@
   </p>
 
   <p>
-    <a href="https://github.com/AdityaVN5/clp/releases/latest">
-      <img src="https://img.shields.io/github/v/release/AdityaVN5/clp?style=for-the-badge&color=blue" alt="Latest Release" />
+    <a href="https://github.com/AdityaVN5/clp-src/releases/tag/v1.0.0">
+      <img src="https://img.shields.io/github/v/release/AdityaVN5/clp-src?style=for-the-badge&color=blue" alt="Latest Release" />
     </a>
     <a href="https://tauri.app">
       <img src="https://img.shields.io/badge/Tauri-v2-orange?style=for-the-badge&logo=tauri" alt="Tauri" />
@@ -23,9 +23,7 @@
   </p>
 
   <p>
-    <a href="#-downloads"><strong>Download Now</strong></a> •
-    <a href="#-features">Features</a> •
-    <a href="#-build-from-source">Build</a>
+    <a href="https://github.com/AdityaVN5/clp-src/releases/tag/v1.0.0"><strong>Download Now</strong></a>
   </p>
 </div>
 
