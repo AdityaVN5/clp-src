@@ -35,7 +35,8 @@
 
 **clp** is a modern, lightweight rethink of the Windows clipboard manager. Built with **Rust** and **Tauri**, it uses a fraction of the memory of Electron apps while delivering a beautiful, native-feeling UI.
 
-It's designed to be the "missing piece" of Windows—fast, unobtrusive, and powerful.
+It's designed to be the "missing piece" of Windows.
+Fast, Unobtrusive, and Powerful.
 
 ## ✨ Features
 
@@ -51,8 +52,8 @@ It's designed to be the "missing piece" of Windows—fast, unobtrusive, and powe
 
 | Version       | Description                          | Link                                                                                                             |
 | :------------ | :----------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
-| **Installer** | RECOMMENDED. Standard Windows setup. | [⬇️ Download Setup (.exe)](https://github.com/AdityaVN5/clp/releases/download/v1.0.0/clp_1.0.0_x64-setup.exe)    |
-| **Portable**  | No install needed. Unzip and run.    | [💼 Download Portable (.zip)](https://github.com/AdityaVN5/clp/releases/download/v1.0.0/clp-portable-v1.0.0.zip) |
+| **Installer** | RECOMMENDED. Standard Windows setup. | [⬇️ Download Setup (.exe)](https://github.com/AdityaVN5/clp-src/releases/download/v1.0.0/clp_1.0.0_x64-setup.exe)    |
+| **Portable**  | No install needed. Unzip and run.    | [💼 Download Portable (.zip)](https://github.com/AdityaVN5/clp-src/releases/download/v1.0.0/clp-portable.zip) |
 
 ## 🛠️ Build from Source
 
