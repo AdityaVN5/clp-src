@@ -508,6 +508,12 @@ pub fn run() {
             let handle = app.handle();
             let manager = Arc::new(ClipboardManager::new(handle.clone()));
             
+            // Set window icon
+            if let Some(window) = app.get_webview_window("main") {
+                let icon = tauri::image::Image::from_bytes(include_bytes!("../icons/clp_logo.png"))?;
+                let _ = window.set_icon(icon);
+            }
+            
             // Manage state
             app.manage(manager.clone());
 

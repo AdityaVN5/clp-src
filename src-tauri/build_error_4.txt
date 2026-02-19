@@ -1,0 +1,73 @@
+   Compiling app v0.1.0 (E:\Projects\clp\src-tauri)
+warning: unused variable: `diff`
+   --> src\lib.rs:138:21
+    |
+138 |                 let diff = data.clips.len() - max;
+    |                     ^^^^ help: if this is intentional, prefix it with an underscore: `_diff`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `clips_snapshot`
+   --> src\lib.rs:238:13
+    |
+238 |         let clips_snapshot = data.clips.clone();
+    |             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_clips_snapshot`
+
+warning: unused variable: `shortcut`
+   --> src\lib.rs:526:86
+    |
+526 |                 tauri_plugin_global_shortcut::Builder::new().with_handler(move |app, shortcut, event| {
+    |                                                                                      ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_shortcut`
+
+warning: structure field `imageSrc` should have a snake case name
+  --> src\lib.rs:21:5
+   |
+21 |     imageSrc: Option<String>, // Base64 string for images
+   |     ^^^^^^^^ help: convert the identifier to snake case: `image_src`
+   |
+   = note: `#[warn(non_snake_case)]` (part of `#[warn(nonstandard_style)]`) on by default
+
+warning: structure field `collectionId` should have a snake case name
+  --> src\lib.rs:22:5
+   |
+22 |     collectionId: Option<String>,
+   |     ^^^^^^^^^^^^ help: convert the identifier to snake case: `collection_id`
+
+warning: structure field `createdAt` should have a snake case name
+  --> src\lib.rs:23:5
+   |
+23 |     createdAt: String, // Formatted string
+   |     ^^^^^^^^^ help: convert the identifier to snake case: `created_at`
+
+warning: structure field `isPinned` should have a snake case name
+  --> src\lib.rs:26:5
+   |
+26 |     isPinned: bool,
+   |     ^^^^^^^^ help: convert the identifier to snake case: `is_pinned`
+
+warning: structure field `labelColor` should have a snake case name
+  --> src\lib.rs:28:5
+   |
+28 |     labelColor: Option<String>,
+   |     ^^^^^^^^^^ help: convert the identifier to snake case: `label_color`
+
+warning: structure field `labelText` should have a snake case name
+  --> src\lib.rs:30:5
+   |
+30 |     labelText: Option<String>,
+   |     ^^^^^^^^^ help: convert the identifier to snake case: `label_text`
+
+warning: structure field `backgroundColor` should have a snake case name
+  --> src\lib.rs:32:5
+   |
+32 |     backgroundColor: Option<String>,
+   |     ^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `background_color`
+
+warning: structure field `iconName` should have a snake case name
+  --> src\lib.rs:41:5
+   |
+41 |     iconName: String, // "image", "mail", etc.
+   |     ^^^^^^^^ help: convert the identifier to snake case: `icon_name`
+
+warning: `app` (lib) generated 11 warnings (run `cargo fix --lib -p app` to apply 3 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.71s

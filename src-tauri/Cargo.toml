@@ -19,7 +19,7 @@ tauri-build = { version = "2.5.4", features = [] }
 
 [dependencies]
 log = "0.4"
-tauri = { version = "2.10.0", features = [] }
+tauri = { version = "2.10.0", features = ["image-png"] }
 tauri-plugin-shell = "2.2.0"
 tauri-plugin-global-shortcut = "2.2.0"
 serde = { version = "1.0", features = ["derive"] }

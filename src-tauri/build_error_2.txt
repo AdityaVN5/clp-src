@@ -1,0 +1,21 @@
+   Compiling app v0.1.0 (E:\Projects\clp\src-tauri)
+error: failed to run custom build command for `app v0.1.0 (E:\Projects\clp\src-tauri)`
+
+Caused by:
+  process didn't exit successfully: `E:\Projects\clp\src-tauri\target\debug\build\app-5102b1a2743779ca\build-script-build` (exit code: 1)
+  --- stdout
+  cargo:rerun-if-env-changed=TAURI_CONFIG
+  cargo:rustc-check-cfg=cfg(desktop)
+  cargo:rustc-cfg=desktop
+  cargo:rustc-check-cfg=cfg(mobile)
+  cargo:rerun-if-changed=E:\Projects\clp\src-tauri\tauri.conf.json
+  cargo:rustc-env=TAURI_ANDROID_PACKAGE_NAME_APP_NAME=clipboardmanager
+  cargo:rustc-env=TAURI_ANDROID_PACKAGE_NAME_PREFIX=com_clp
+  cargo:rustc-check-cfg=cfg(dev)
+  cargo:rustc-cfg=dev
+  cargo:PERMISSION_FILES_PATH=E:\Projects\clp\src-tauri\target\debug\build\app-64c59c4ff4d4e86c\out\app-manifest\__app__-permission-files
+  cargo:rerun-if-changed=capabilities
+  cargo:rerun-if-env-changed=REMOVE_UNUSED_COMMANDS
+  cargo:rustc-env=TAURI_ENV_TARGET_TRIPLE=x86_64-pc-windows-msvc
+  package.metadata does not exist
+  `icons/icon.ico` not found; required for generating a Windows Resource file during tauri-build
