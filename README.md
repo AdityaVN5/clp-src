@@ -31,52 +31,52 @@
 
 ---
 
-## 🚀 Overview
+## 🚀 Why?
 
-**clp** is a modern, lightweight rethink of the Windows clipboard manager. Built with **Rust** and **Tauri**, it uses a fraction of the memory of Electron apps while delivering a beautiful, native-feeling UI.
+Because the default Windows clipboard (Win+V) is **annoying**. �
+You press Win+V -> Paste one thing -> **POOF!** It disappears.
+You press Win+V -> Paste another thing -> **POOF!** Gone again.
 
-It's designed to be the "missing piece" of Windows.
-Fast, Unobtrusive, and Powerful.
+**clp fixes this.**
+Just accept your fate and click the **Pin** 📌 button. It sticks to your screen.
+Copy -> Paste -> Paste -> Paste. Zero friction.
 
-## ✨ Features
+## 🔥 The Good Stuff
 
-- **⚡ Blazing Fast**: Powered by a Rust backend. fast startup, low memory usage.
-- **🎨 Visual History**: See your copy history with rich previews for text and images.
-- **📂 Smart Collections**: Organize clips into "Links", "Code", "Images" automatically or manually.
-- **🔍 Instant Search**: Find that one thing you copied 3 hours ago in milliseconds.
-- **⌨️ Global Hotkey**: `Ctrl+Shift+V` to toggle anywhere (Customizable).
-- **🌙 Theme Aware**: Seamlessly adapts to your system's Light or Dark mode.
-- **🔒 Private**: Your data stays local. No cloud syncing, no tracking.
+- **Unlimited Power ⚡**: Windows caps you at 25 clips. **clp** stores **unlimited** clips (or until your RAM explodes). You set the limits.
+- **Looks Sick 🎨**: Dark mode. Light mode. Fits your vibe perfectly.
+- **Zero Bloat 🚀**: Written in **Rust**. Eats RAM for breakfast (very little of it).
+- **Search like a Ninja 🥷**: `Ctrl+Shift+V` -> Type "link" -> Enter. Done.
+- **Local First 🔒**: No cloud. No tracking. Your data is yours. Period.
 
-## 📦 Downloads
+## ⚡ Get It
 
-| Version       | Description                          | Link                                                                                                             |
-| :------------ | :----------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
-| **Installer** | RECOMMENDED. Standard Windows setup. | [⬇️ Download Setup (.exe)](https://github.com/AdityaVN5/clp-src/releases/download/v1.0.0/clp_1.0.0_x64-setup.exe)    |
-| **Portable**  | No install needed. Unzip and run.    | [💼 Download Portable (.zip)](https://github.com/AdityaVN5/clp-src/releases/download/v1.0.0/clp-portable.zip) |
+Stop suffering. Upgrade your workflow.
 
-## 🛠️ Build from Source
+| Flavor        | For Who?              | Link                                                                                                   |
+| :------------ | :-------------------- | :----------------------------------------------------------------------------------------------------- |
+| **Setup.exe** | Normies (Recommended) | [⬇️ Install Me](https://github.com/AdityaVN5/clp-src/releases/download/v1.0.0/clp_1.0.0_x64-setup.exe) |
+| **Portable**  | Hackers / USB Sticks  | [💼 Run Anywhere](https://github.com/AdityaVN5/clp-src/releases/download/v1.0.0/clp-portable.zip)      |
 
-Requirements:
+## 🛠️ DIY (Build it yourself)
 
-- [Node.js](https://nodejs.org/) (v16+)
-- [Rust](https://www.rust-lang.org/) (v1.70+)
+Trust no one? Build it from source.
 
 ```bash
-# Clone the repository
+# Steal the code
 git clone https://github.com/AdityaVN5/clp.git
 cd clp
 
-# Install frontend dependencies
+# Feed the beast
 npm install
 
-# Run in development mode
+# Run it
 npm run tauri dev
 
-# Build for production
+# Ship it
 npm run tauri build
 ```
 
-## 📜 License
+## 📜 Legal Stuff
 
-[MIT License](LICENSE) © 2024 AdityaVN5
+[MIT License](LICENSE). Do whatever you want. We don't care.
